@@ -35,12 +35,26 @@ export default function Home() {
     // </div>
     <>
       <Header user={null} />
-      <Card className="mt-20 p-4">
+      <Card className="mx-auto mt-20 p-15 bg-gray-50">
         <CardHeader>
-          <CardTitle>Produto em destaque</CardTitle>
+          <CardTitle className="text-2xl font-bold">Produtos em Destaque</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-7x1 mx-auto grid grid-cols-[repeat(auto-fit,minmax(225px,1fr))] gap-8 p-10">
+          <div className="max-w-7x1 mx-auto grid grid-cols-[repeat(auto-fit,minmax(225px,1fr))] gap-8">
+            <Item />
+            <Item />
+            <Item />
+            <Item />
+            <Item />
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="mx-auto p-15 bg-gray-50">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Produtos Recomendados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-7x1 mx-auto grid grid-cols-[repeat(auto-fit,minmax(225px,1fr))] gap-8">
             <Item />
             <Item />
             <Item />
