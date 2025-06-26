@@ -5,7 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_superuser, get_db, get_current_user
 from app.models.user import User
-from app.schemas.product import Product, ProductCreate, ProductDetail, ProductUpdate
+from app.schemas.product import (
+    Product,
+    ProductCreate,
+    ProductDetail,
+    ProductUpdate,
+    CategoryBase,
+)
 from app.services.product import product_service
 
 router = APIRouter()
@@ -23,8 +29,16 @@ def read_products(
         db, skip=skip, limit=limit, category_id=category, search=search
     )
     total = product_service.count(db, category_id=category, search=search)
+    items = []
+    for prod in products:
+        prod_dict = prod.__dict__.copy()
+        prod_dict["categories"] = [
+            CategoryBase.model_validate(cat, from_attributes=True)
+            for cat in prod.categories
+        ]
+        items.append(Product.model_validate(prod_dict, from_attributes=True))
     return {
-        "items": products,
+        "items": items,
         "total": total,
         "page": skip // limit + 1 if limit > 0 else 1,
         "limit": limit,
