@@ -1,13 +1,26 @@
+"use client";
 export default function Home() {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+
+
+    }
+
     return (
         <section className="flex items-center align-center justify-center h-screen">
             <div className="mx-auto flex w-full max-w-96 flex-col items-center gap-4">
                 <h1 className="py-2 text-3xl font-bold">Faça seu Cadastro</h1>
 
-                <form className="flex w-full flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+                <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
                     <input
                         type="text"
                         placeholder="Digite seu nome"
+                        className="w-full rounded-full border border-gray-400 px-4 py-4"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Digite seu endereço"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                     />
                     <input

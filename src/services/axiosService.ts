@@ -16,3 +16,18 @@ export class AuthService {
         });
     }
 }
+
+export class UserService {
+    register(name: string, address: string, email: string, password: string) {
+        const formData = new URLSearchParams();
+        formData.append('name', name);
+        formData.append('address', address);
+        formData.append('email', email);
+        formData.append('password', password);
+        return axiosInstance.post('/auth/register', formData, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+    }
+}
