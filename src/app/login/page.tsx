@@ -6,7 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 
 
-export default function Home({ user, setUser }: { user: any; setUser: any }) {
+export default function Login({ user, setUser }: { user: any; setUser: any }) {
 
     const [email, setEmail] = useState<string>();
     const [password, setPassword] = useState<string>();
