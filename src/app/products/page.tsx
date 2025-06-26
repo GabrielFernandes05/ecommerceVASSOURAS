@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react"
-import Header from "@/components/ui/header"
+import { PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProductService, CategoryService } from "@/services/axiosService";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import Header from "@/components/ui/header";
 
 export default function Home() {
 
@@ -116,9 +116,10 @@ export default function Home() {
 
   return (
     <>
-      <div className="p-4 bg-gray-50 min-h-screen w-full flex flex-col">
+      <Header user={null} />
+      <div className="mx-auto py-32 p-4 bg-gray-50 min-h-screen w-full flex flex-col">
         <div className="flex justify-between mb-4 p-4">
-          <h1 className="text-4xl font-bold text-black">Produtos</h1>
+          <h1 className="text-2xl font-bold text-black">Meus Produtos</h1>
           {formCadastrarProduto()}
         </div>
         <div className="flex gap-4 p-4 bg-gray-100 border rounded-md">
@@ -158,7 +159,7 @@ export default function Home() {
           <div className="bg-gray-200 w-full h-full rounded-md p-4">
             <Card className="h-full">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">Produtos em Destaque</CardTitle>
+                <CardTitle className="text-xl font-bold">Produtos em Destaque</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(225px,1fr))] gap-8">
