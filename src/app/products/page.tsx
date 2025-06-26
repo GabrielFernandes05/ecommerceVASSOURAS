@@ -54,7 +54,7 @@ export default function Home() {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button className="bg-gray-200 text-black hover:bg-white hover:shadow-black hover:shadow-md">
-            Cadastrar Produto <PlusCircle className="ml-2" />
+            Vender Produto <PlusCircle className="ml-2" />
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -156,7 +156,7 @@ export default function Home() {
               </SidebarContent>
             </SidebarProvider>
           </div>
-          <div className="bg-gray-200 w-full h-full rounded-md p-4">
+          <div className="bg-gray-200 w-full h-full rounded-md p-4 border-red-800">
             <Card className="h-full">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">Produtos em Destaque</CardTitle>
