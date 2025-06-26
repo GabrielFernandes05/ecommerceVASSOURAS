@@ -3,7 +3,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_superuser, get_db
+from app.api.deps import get_current_active_superuser, get_db, get_current_user
 from app.models.user import User
 from app.schemas.product import Product, ProductCreate, ProductDetail, ProductUpdate
 from app.services.product import product_service
@@ -54,6 +54,17 @@ def create_product(
 ) -> Any:
     product = product_service.create(db, obj_in=product_in)
     return product
+
+
+@router.post("/productpostbyuser/", response_model=Product)
+def create_product_by_user(
+    product_in: ProductCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return product_service.create_by_user(
+        db=db, obj_in=product_in, user_id=current_user.id
+    )
 
 
 @router.put(

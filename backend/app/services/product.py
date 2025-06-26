@@ -46,6 +46,21 @@ class ProductService:
             db, obj_in=product_create, category_ids=category_ids
         )
 
+    def create_by_user(self, db: Session, obj_in: ProductCreate, user_id: int):
+        data = obj_in.dict(exclude_unset=True)
+        category_ids = data.pop("category_ids", [])
+        db_obj = Product(**data, created_by_id=user_id)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        if category_ids:
+            db_obj.categories = (
+                db.query(Category).filter(Category.id.in_(category_ids)).all()
+            )
+            db.commit()
+            db.refresh(db_obj)
+        return db_obj
+
     def update(self, db: Session, *, db_obj: Product, obj_in: ProductUpdate) -> Product:
         category_ids = None
         if hasattr(obj_in, "category_ids") and obj_in.category_ids is not None:

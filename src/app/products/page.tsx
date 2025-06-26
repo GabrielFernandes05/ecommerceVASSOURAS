@@ -3,11 +3,53 @@ import { SidebarProvider, SidebarHeader, SidebarGroup, SidebarContent, SidebarMe
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input";
 import { PlusCircle } from "lucide-react"
 import Header from "@/components/ui/header"
+import { useEffect, useState } from "react";
+import { ProductService, CategoryService } from "@/services/axiosService";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+
 export default function Home() {
 
   const formCadastrarProduto = () => {
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [price, setPrice] = useState(0);
+    const [stock, setStock] = useState(0);
+    const [imageUrl, setImageUrl] = useState("");
+    const isActive = true;
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+    const [categoryIds, setCategoryIds] = useState<number[]>([]);
+    const productService = new ProductService();
+    const categoryService = new CategoryService();
+
+    useEffect(() => {
+      categoryService.getCategories()
+        .then(response => setCategories(response.data))
+        .catch(error => setCategories([]));
+    }, []);
+
+    const handleSave = () => {
+      if (!name || !description || price <= 0 || stock < 0 || !imageUrl) {
+        alert("Por favor, preencha todos os campos corretamente.");
+        return;
+      }
+      productService.createProduct(
+        name,
+        description,
+        price,
+        stock,
+        imageUrl,
+        isActive,
+        categoryIds
+      ).then(response => {
+        console.log("Produto criado com sucesso:", response.data);
+      }).catch(error => {
+        console.error("Erro ao criar produto:", error);
+      });
+    }
+
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -19,11 +61,48 @@ export default function Home() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-bold">Cadastrar Produto</AlertDialogTitle>
             <AlertDialogDescription>
-              Preencha os detalhes do produto para cadastrá-lo.
+              <Card>
+                <CardHeader>Digite as informações do seu produto</CardHeader>
+                <CardContent className="grid gap-4">
+
+                  <Input placeholder="Nome do Produto" onChange={(e) => setName(e.target.value)} />
+                  <Input placeholder="Descrição do Produto" onChange={(e) => setDescription(e.target.value)} />
+                  <Input placeholder="Preço do Produto" onChange={(e) => setPrice(Number(e.target.value))} type="number" min={0} />
+                  <Input placeholder="Quantidade em Estoque" onChange={(e) => setStock(Number(e.target.value))} type="number" min={1} />
+                  <Input placeholder="URL da Imagem" onChange={(e) => setImageUrl(e.target.value)} />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {categoryIds.length > 0
+                          ? categories.filter(cat => categoryIds.includes(cat.id)).map(cat => cat.name).join(", ")
+                          : "Selecione as categorias"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-72">
+                      {categories.map(cat => (
+                        <DropdownMenuCheckboxItem
+                          key={cat.id}
+                          checked={categoryIds.includes(cat.id)}
+                          onCheckedChange={(checked) => {
+                            setCategoryIds((prev) =>
+                              checked
+                                ? [...prev, cat.id]
+                                : prev.filter(id => id !== cat.id)
+                            );
+                          }}
+                        >
+                          {cat.name}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                </CardContent>
+              </Card>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction>
+            <AlertDialogAction onClick={handleSave}>
               Salvar
             </AlertDialogAction>
             <AlertDialogCancel>

@@ -41,3 +41,5 @@ class Product(Base):
     )
     order_items = relationship("OrderItem", back_populates="product")
     cart_items = relationship("CartItem", back_populates="product")
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by = relationship("User", back_populates="products_created")
