@@ -3,13 +3,14 @@
 import { ChangeEvent, useState } from "react";
 import Link from "next/link";
 import { AuthService } from "@/services/axiosService";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
 
     const [email, setEmail] = useState<string>();
     const [password, setPassword] = useState<string>();
-    const [redirect, setRedirect] = useState<boolean>(false);
     const authService = new AuthService();
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -19,20 +20,21 @@ export default function Home() {
                 authService.authenticate(email, password).then((response) => {
                     if (response.status === 200) {
                         localStorage.setItem("access_token", response.data.access_token);
-                        setRedirect(true);
+                        router.push("/");
+                    }
+                })
+                .catch((error) => {
+                    if (error.response) {
+                        alert(`Erro ao realizar login: ${error.response.data.detail}`);
                     }
                 });
             } catch (e: any) {
-                alert(`Erro ao fazer login: ${e.response.data}`);
+                alert(`Erro ao fazer login: ${e.response?.data}`);
             }
         } else {
             alert("Preencha o e-mail e a senha!");
         }
     };
-
-    if (redirect) {
-        return <Link href="/">Redirecionando...</Link>;
-    }
 
     return (
         <section className="flex items-center justify-center h-screen">
@@ -41,7 +43,7 @@ export default function Home() {
 
                 <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
                     <input
-                        type="text"
+                        type="email"
                         placeholder="Digite seu e-mail"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                         value={email}
