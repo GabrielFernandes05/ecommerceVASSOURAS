@@ -11,7 +11,7 @@ const Header = ({ user }: { user: any }) => {
             <div className="max-w-7x1 mx-auto flex items-center justify-between sm:px-8 py-8 bg-red-800">
                 <Link href="/" className="flex items-center">
                     <p className="text-white text-4xl font-bold">
-                        Barãousada
+                        BarãoUsada
                     </p>
                 </Link>
 

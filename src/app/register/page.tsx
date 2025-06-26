@@ -71,7 +71,7 @@ export default function Home() {
                     />
                     <button
                         type="submit"
-                        className="w-full rounded-full bg-blue-500 px-4 py-4 text-white hover:bg-blue-600 transition-colors duration-300"
+                        className="w-full rounded-full bg-red-800 px-4 py-4 text-white hover:bg-red-800 transition-colors duration-300"
                     >
                         Cadastrar
                     </button>
