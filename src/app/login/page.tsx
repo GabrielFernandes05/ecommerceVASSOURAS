@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import Link from "next/link";
+
 import axios from "axios";
 
 
@@ -8,6 +11,7 @@ export default function Home({ user, setUser }: { user: any; setUser: any }) {
     const [email, setEmail] = useState<string>();
     const [password, setPassword] = useState<string>();
     const [redirect, setRedirect] = useState<boolean>(false);
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -30,11 +34,11 @@ export default function Home({ user, setUser }: { user: any; setUser: any }) {
     };
 
     if (redirect || user) {
-        return <Navigate to="/" />;
+        return <Link href="/">Redirecionando...</Link>;
     }
 
     return (
-        <section className="flex items-center">
+        <section className="flex items-center align-center justify-center h-screen">
             <div className="mx-auto flex w-full max-w-96 flex-col items-center gap-4">
                 <h1 className="py-2 text-3xl font-bold">Faça seu Login</h1>
 
@@ -57,14 +61,14 @@ export default function Home({ user, setUser }: { user: any; setUser: any }) {
                             setPassword(e.target.value);
                         }}
                     ></input>
-                    <button className="bg-primary-400 w-full cursor-pointer rounded-full border border-gray-400 px-4 py-4 font-bold text-white">
+                    <button className="bg-red-800 w-full cursor-pointer rounded-full border border-gray-400 px-4 py-4 font-bold text-white">
                         Login
                     </button>
                 </form>
 
                 <p>
                     Ainda não tem uma conta?{" "}
-                    <Link to="/register" className="font-semibold underline">
+                    <Link href="/register" className="font-semibold underline">
                         Registre-se Aqui!
                     </Link>
                 </p>
