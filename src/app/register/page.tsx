@@ -22,11 +22,11 @@ export default function Home() {
                         router.push("/");
                     }
                 })
-                .catch((error) => {
-                    if (error.response) {
-                        alert(`Erro ao realizar cadastro: ${error.response.data.detail}`);
-                    }
-                });
+                    .catch((error) => {
+                        if (error.response) {
+                            alert(`Erro ao realizar cadastro: ${error.response.data.detail}`);
+                        }
+                    });
             } catch (error) {
                 alert("Erro ao realizar cadastro.");
             }

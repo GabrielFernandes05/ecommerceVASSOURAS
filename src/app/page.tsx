@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 export default function Home() {
   return (
     <>
-      <Header user={null} />
+      <Header />
       <Card className="mx-auto mt-20 p-15 bg-gray-50">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Produtos em Destaque</CardTitle>

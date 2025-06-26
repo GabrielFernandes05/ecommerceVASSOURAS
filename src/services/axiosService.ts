@@ -41,6 +41,10 @@ export class UserService {
             password
         });
     }
+
+    getUser() {
+        return axiosInstance.get('/users/me');
+    }
 }
 
 export class ProductService {
@@ -63,10 +67,53 @@ export class ProductService {
             category_ids
         });
     }
+
+    getProducts(
+        skip: number = 0,
+        limit: number = 20,
+        category?: number,
+        search?: string
+    ) {
+        const params: any = { skip, limit };
+        if (category !== undefined && category !== null) params.category = category;
+        if (search) params.search = search;
+        return axiosInstance.get('/products/', { params });
+    }
+
+    getProduct(id: number) {
+        return axiosInstance.get(`/products/${id}`);
+    }
 }
 
 export class CategoryService {
     getCategories() {
         return axiosInstance.get('/categories/');
+    }
+}
+
+export class CartService {
+    getCart() {
+        return axiosInstance.get('/cart/');
+    }
+
+    clearCart() {
+        return axiosInstance.delete('/cart/');
+    }
+
+    addItemToCart(productId: number, quantity: number) {
+        return axiosInstance.post('/cart/items', {
+            product_id: productId,
+            quantity: quantity
+        });
+    }
+
+    updateCartItem(productId: number, quantity: number) {
+        return axiosInstance.put(`/cart/items/${productId}/`, {
+            quantity: quantity
+        });
+    }
+
+    removeItemFromCart(productId: number) {
+        return axiosInstance.delete(`/cart/items/${productId}/`);
     }
 }

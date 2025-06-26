@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useState } from "react";
 import Link from "next/link";
-import { AuthService } from "@/services/axiosService";
+import { AuthService, UserService } from "@/services/axiosService";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -10,9 +10,10 @@ export default function Home() {
     const [email, setEmail] = useState<string>();
     const [password, setPassword] = useState<string>();
     const authService = new AuthService();
+    const userService = new UserService();
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (email && password) {
@@ -20,14 +21,20 @@ export default function Home() {
                 authService.authenticate(email, password).then((response) => {
                     if (response.status === 200) {
                         localStorage.setItem("access_token", response.data.access_token);
+                        userService.getUser().then((userResponse) => {
+                            console.log(userResponse.data);
+                            localStorage.setItem("username", JSON.stringify(userResponse.data.name));
+                        }).catch((error) => {
+                            console.error(`Erro ao obter usuário: ${error.response?.data.detail}`);
+                        });
                         router.push("/");
                     }
                 })
-                .catch((error) => {
-                    if (error.response) {
-                        alert(`Erro ao realizar login: ${error.response.data.detail}`);
-                    }
-                });
+                    .catch((error) => {
+                        if (error.response) {
+                            alert(`Erro ao realizar login: ${error.response.data.detail}`);
+                        }
+                    });
             } catch (e: any) {
                 alert(`Erro ao fazer login: ${e.response?.data}`);
             }

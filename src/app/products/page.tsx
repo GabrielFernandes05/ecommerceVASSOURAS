@@ -5,24 +5,103 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input";
 import { PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ProductService, CategoryService } from "@/services/axiosService";
+import { use, useEffect, useState } from "react";
+import { ProductService, CategoryService, CartService } from "@/services/axiosService";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import Header from "@/components/ui/header";
+import { useRouter } from "next/navigation";
+import { ListCollapse, ShoppingCart } from "lucide-react";
 
 export default function Home() {
+  const productService = new ProductService();
+  const categoryService = new CategoryService();
+  const cartService = new CartService();
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [categoryIds, setCategoryIds] = useState<number[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [quantity, setQuantity] = useState<number>(1);
+  const router = useRouter();
+  useEffect(() => {
+    productService.getProducts()
+      .then(response => {
+        setProducts(response.data.items);
+        console.log(response.data);
+      })
+      .catch(error => setProducts([]));
+  }, []);
+
+  const addProductToCart = (productId: number, quantity: number, quantityMax: number) => {
+    console.log(quantity, quantityMax);
+    if (quantity < 1 || quantity > quantityMax) {
+      alert(`Quantidade inválida. Deve ser entre 1 e ${quantityMax}.`);
+      return;
+    }
+    cartService.addItemToCart(productId, quantity)
+      .then(response => {
+        console.log("Produto adicionado ao carrinho:", response.data);
+        alert("Produto adicionado ao carrinho com sucesso!");
+      })
+      .catch(error => {
+        console.error("Erro ao adicionar produto ao carrinho:", error);
+        alert("Erro ao adicionar produto ao carrinho.");
+      });
+
+  }
+
+  const formComprarProduto = (productId: number, quantityMax: number) => {
+    return (
+      <>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="mt-2 bg-red-800 text-white hover:bg-red-700"
+            >
+              <ShoppingCart />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-2xl font-bold">Confirmar Compra</AlertDialogTitle>
+              <div>
+                <Card>
+                  <CardHeader>Quantos itens você deseja comprar?</CardHeader>
+                  <CardContent className="grid gap-4">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={quantityMax}
+                      placeholder={`Quantidade (máx. ${quantityMax})`}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (value > quantityMax) {
+                          alert(`Quantidade máxima é ${quantityMax}`);
+                        } else {
+                          setQuantity(value);
+                        }
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => addProductToCart(productId, quantity, quantityMax)}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    )
+  }
 
   const formCadastrarProduto = () => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState(0);
     const [stock, setStock] = useState(0);
-    const [imageUrl, setImageUrl] = useState("");
+    const [imageUrl, setImageUrl] = useState("https://plumberswholesale.com/media/catalog/product/placeholder/default/NoImage_256_6.png");
     const isActive = true;
-    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-    const [categoryIds, setCategoryIds] = useState<number[]>([]);
-    const productService = new ProductService();
-    const categoryService = new CategoryService();
+
 
     useEffect(() => {
       categoryService.getCategories()
@@ -31,7 +110,7 @@ export default function Home() {
     }, []);
 
     const handleSave = () => {
-      if (!name || !description || price <= 0 || stock < 0 || !imageUrl) {
+      if (!name || !description || price <= 0 || stock < 0) {
         alert("Por favor, preencha todos os campos corretamente.");
         return;
       }
@@ -44,7 +123,7 @@ export default function Home() {
         isActive,
         categoryIds
       ).then(response => {
-        console.log("Produto criado com sucesso:", response.data);
+        router.push(`/products/${response.data.id}`);
       }).catch(error => {
         console.error("Erro ao criar produto:", error);
       });
@@ -60,7 +139,7 @@ export default function Home() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-bold">Cadastrar Produto</AlertDialogTitle>
-            <AlertDialogDescription>
+            <div>
               <Card>
                 <CardHeader>Digite as informações do seu produto</CardHeader>
                 <CardContent className="grid gap-4">
@@ -99,7 +178,7 @@ export default function Home() {
 
                 </CardContent>
               </Card>
-            </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={handleSave}>
@@ -116,14 +195,14 @@ export default function Home() {
 
   return (
     <>
-      <Header user={null} />
-      <div className="mx-auto py-32 p-4 bg-gray-50 min-h-screen w-full flex flex-col">
+      <Header />
+      <div className="mx-auto pt-36 p-4 bg-gray-50 min-h-screen w-full flex flex-col">
         <div className="flex justify-between mb-4 p-4">
           <h1 className="text-2xl font-bold text-black">Meus Produtos</h1>
           {formCadastrarProduto()}
         </div>
         <div className="flex gap-4 p-4 bg-gray-100 border rounded-md">
-          <div className="bg-gray-200 h-full rounded-md p-4">
+          <div className="bg-gray-200 rounded-md p-4">
             <SidebarProvider className="flex flex-col">
               <SidebarHeader>
                 <h2 className="text-lg font-bold">Categorias</h2>
@@ -131,26 +210,13 @@ export default function Home() {
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton>
-                        <span>Todos os Produtos</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton>
-                        <span>Eletrônicos</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton>
-                        <span>Roupas</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton>
-                        <span>Calçados</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {categories.map((category: any) => (
+                      <SidebarMenuItem key={category.id}>
+                        <SidebarMenuButton>
+                          <span>{category.name}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroup>
               </SidebarContent>
@@ -159,15 +225,36 @@ export default function Home() {
           <div className="bg-gray-200 w-full h-full rounded-md p-4 border-red-800">
             <Card className="h-full">
               <CardHeader>
-                <CardTitle className="text-xl font-bold">Produtos em Destaque</CardTitle>
+                <CardTitle className="text-xl font-bold">Meus produtos anunciados</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(225px,1fr))] gap-8">
-                  <p>Produto 1</p>
-                  <p>Produto 2</p>
-                  <p>Produto 3</p>
-                  <p>Produto 4</p>
-                </div>
+              <CardContent className="flex flex-wrap gap-6">
+                {products.map((product: any) => (
+                  <div
+                    key={product.id}
+                    className="flex flex-col items-center border rounded-lg bg-white shadow-md p-4 min-w-56 min-h-72"
+                  >
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      title={product.name}
+                      className="w-32 h-32 object-cover rounded-md mb-2"
+                      loading="lazy"
+                    />
+                    <h3 className="font-bold text-center truncate w-full">{product.name}</h3>
+                    <p className="text-sm text-gray-600 text-center line-clamp-3">{product.description}</p>
+                    <p className="text-lg font-bold mt-2">R$ {product.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">Estoque: {product.stock}</p>
+                    <div className="flex gap-3 mt-4">
+                      <Button
+                        className="mt-2 bg-red-800 text-white hover:bg-red-700"
+                        onClick={() => router.push(`/products/${product.id}`)}
+                      >
+                        <ListCollapse />
+                      </Button>
+                      {formComprarProduto(product.id, product.stock)}
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
