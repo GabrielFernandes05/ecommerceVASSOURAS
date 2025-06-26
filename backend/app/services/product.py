@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.repositories.product import product_repository
 from app.schemas.product import ProductCreate, ProductUpdate
-
+from app.models.category import Category
 
 class ProductService:
     def get(self, db: Session, product_id: int) -> Optional[Product]:
