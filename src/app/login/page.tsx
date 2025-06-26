@@ -1,48 +1,36 @@
 "use client";
 
 import { FormEvent, ChangeEvent, useState } from "react";
-import axios from "axios";
 import Link from "next/link";
+import { AuthService } from "@/services/axiosService";
 
-interface LoginProps {
-    user: any;
-    setUser: (user: any) => void;
-}
+export default function Home() {
 
-export default function Login({ user, setUser }: LoginProps) {
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [email, setEmail] = useState<string>();
+    const [password, setPassword] = useState<string>();
     const [redirect, setRedirect] = useState<boolean>(false);
+    const authService = new AuthService();
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (email && password) {
             try {
-                const { data: userDoc } = await axios.post("/users/login", {
-                    email,
-                    password,
+                authService.authenticate(email, password).then((response) => {
+                    if (response.status === 200) {
+                        localStorage.setItem("access_token", response.data.access_token);
+                        setRedirect(true);
+                    }
                 });
-
-                setUser(userDoc);
-                setRedirect(true);
-            } catch (error: any) {
-                alert(`Erro ao fazer login: ${error?.response?.data || "Erro desconhecido"}`);
+            } catch (e: any) {
+                alert(`Erro ao fazer login: ${e.response.data}`);
             }
         } else {
             alert("Preencha o e-mail e a senha!");
         }
     };
 
-    const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value);
-    };
-
-    const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setPassword(e.target.value);
-    };
-
-    if (redirect || user) {
+    if (redirect) {
         return <Link href="/">Redirecionando...</Link>;
     }
 
@@ -53,18 +41,18 @@ export default function Login({ user, setUser }: LoginProps) {
 
                 <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
                     <input
-                        type="email"
+                        type="text"
                         placeholder="Digite seu e-mail"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                         value={email}
-                        onChange={handleEmailChange}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                     />
                     <input
                         type="password"
                         placeholder="Digite sua senha"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                         value={password}
-                        onChange={handlePasswordChange}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     />
                     <button
                         type="submit"
