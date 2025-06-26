@@ -10,8 +10,7 @@ const Header = ({ user }: { user: any }) => {
         <header className="shadow-md fixed top-0 left-0 w-full z-10">
             <div className="max-w-7x1 mx-auto flex items-center justify-between sm:px-8 py-8 bg-red-800">
                 <Link href="/" className="flex items-center">
-                    <img className="h-10" src="" alt="" />
-                    <p className="text-white text-2xl font-bold">
+                    <p className="text-white text-4xl font-bold">
                         Barãousada
                     </p>
                 </Link>
