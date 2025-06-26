@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import { FormEvent, ChangeEvent, useState } from "react";
+import axios from "axios";
 import Link from "next/link";
 
-import axios from "axios";
+interface LoginProps {
+    user: any;
+    setUser: (user: any) => void;
+}
 
-
-export default function Login({ user, setUser }: { user: any; setUser: any }) {
-
-    const [email, setEmail] = useState<string>();
-    const [password, setPassword] = useState<string>();
+export default function Login({ user, setUser }: LoginProps) {
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
     const [redirect, setRedirect] = useState<boolean>(false);
 
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (email && password) {
@@ -25,12 +26,20 @@ export default function Login({ user, setUser }: { user: any; setUser: any }) {
 
                 setUser(userDoc);
                 setRedirect(true);
-            } catch (e: any) {
-                alert(`Erro ao fazer login: ${e.response.data}`);
+            } catch (error: any) {
+                alert(`Erro ao fazer login: ${error?.response?.data || "Erro desconhecido"}`);
             }
         } else {
             alert("Preencha o e-mail e a senha!");
         }
+    };
+
+    const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+    };
+
+    const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setPassword(e.target.value);
     };
 
     if (redirect || user) {
@@ -38,7 +47,7 @@ export default function Login({ user, setUser }: { user: any; setUser: any }) {
     }
 
     return (
-        <section className="flex items-center align-center justify-center h-screen">
+        <section className="flex items-center justify-center h-screen">
             <div className="mx-auto flex w-full max-w-96 flex-col items-center gap-4">
                 <h1 className="py-2 text-3xl font-bold">Faça seu Login</h1>
 
@@ -48,20 +57,19 @@ export default function Login({ user, setUser }: { user: any; setUser: any }) {
                         placeholder="Digite seu e-mail"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                         value={email}
-                        onChange={(e: any) => {
-                            setEmail(e.target.value);
-                        }}
-                    ></input>
+                        onChange={handleEmailChange}
+                    />
                     <input
                         type="password"
                         placeholder="Digite sua senha"
                         className="w-full rounded-full border border-gray-400 px-4 py-4"
                         value={password}
-                        onChange={(e: any) => {
-                            setPassword(e.target.value);
-                        }}
-                    ></input>
-                    <button className="bg-red-800 w-full cursor-pointer rounded-full border border-gray-400 px-4 py-4 font-bold text-white">
+                        onChange={handlePasswordChange}
+                    />
+                    <button
+                        type="submit"
+                        className="bg-red-800 w-full cursor-pointer rounded-full border border-gray-400 px-4 py-4 font-bold text-white"
+                    >
                         Login
                     </button>
                 </form>
