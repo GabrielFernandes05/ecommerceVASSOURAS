@@ -5,94 +5,32 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input";
 import { PlusCircle } from "lucide-react";
-import { use, useEffect, useState } from "react";
-import { ProductService, CategoryService, CartService } from "@/services/axiosService";
+import { useEffect, useState } from "react";
+import { ProductService, CategoryService } from "@/services/axiosService";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import Header from "@/components/ui/header";
 import { useRouter } from "next/navigation";
-import { ListCollapse, ShoppingCart } from "lucide-react";
+import { ListCollapse } from "lucide-react";
+import CartForm from "@/components/forms/cartForm";
 
 export default function Home() {
   const productService = new ProductService();
   const categoryService = new CategoryService();
-  const cartService = new CartService();
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [categoryIds, setCategoryIds] = useState<number[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [quantity, setQuantity] = useState<number>(1);
   const router = useRouter();
   useEffect(() => {
     productService.getProducts()
       .then(response => {
-        setProducts(response.data.items);
-        console.log(response.data);
+        setProducts(response.data.items.filter((product: any) =>
+          product.created_by_id == localStorage.getItem("user_id")
+        ));
       })
       .catch(error => setProducts([]));
   }, []);
 
-  const addProductToCart = (productId: number, quantity: number, quantityMax: number) => {
-    console.log(quantity, quantityMax);
-    if (quantity < 1 || quantity > quantityMax) {
-      alert(`Quantidade inválida. Deve ser entre 1 e ${quantityMax}.`);
-      return;
-    }
-    cartService.addItemToCart(productId, quantity)
-      .then(response => {
-        console.log("Produto adicionado ao carrinho:", response.data);
-        alert("Produto adicionado ao carrinho com sucesso!");
-      })
-      .catch(error => {
-        console.error("Erro ao adicionar produto ao carrinho:", error);
-        alert("Erro ao adicionar produto ao carrinho.");
-      });
 
-  }
-
-  const formComprarProduto = (productId: number, quantityMax: number) => {
-    return (
-      <>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              className="mt-2 bg-red-800 text-white hover:bg-red-700"
-            >
-              <ShoppingCart />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-bold">Confirmar Compra</AlertDialogTitle>
-              <div>
-                <Card>
-                  <CardHeader>Quantos itens você deseja comprar?</CardHeader>
-                  <CardContent className="grid gap-4">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={quantityMax}
-                      placeholder={`Quantidade (máx. ${quantityMax})`}
-                      onChange={(e) => {
-                        const value = Number(e.target.value);
-                        if (value > quantityMax) {
-                          alert(`Quantidade máxima é ${quantityMax}`);
-                        } else {
-                          setQuantity(value);
-                        }
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => addProductToCart(productId, quantity, quantityMax)}>Confirmar</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
-    )
-  }
 
   const formCadastrarProduto = () => {
     const [name, setName] = useState("");
@@ -251,7 +189,7 @@ export default function Home() {
                       >
                         <ListCollapse />
                       </Button>
-                      {formComprarProduto(product.id, product.stock)}
+                      <CartForm productId={product.id} quantityMax={product.stock} />
                     </div>
                   </div>
                 ))}
@@ -262,5 +200,4 @@ export default function Home() {
       </div>
     </>
   )
-
 }
