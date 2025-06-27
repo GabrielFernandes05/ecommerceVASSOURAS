@@ -22,8 +22,8 @@ export default function Home() {
                     if (response.status === 200) {
                         localStorage.setItem("access_token", response.data.access_token);
                         userService.getUser().then((userResponse) => {
-                            localStorage.setItem("username", JSON.stringify(userResponse.data.name));
-                            localStorage.setItem("user_id", JSON.stringify(userResponse.data.id));
+                            localStorage.setItem("username", userResponse.data.name);
+                            localStorage.setItem("user_id", userResponse.data.id.toString());
                         }).catch((error) => {
                             console.error(`Erro ao obter usuário: ${error.response?.data.detail}`);
                         });

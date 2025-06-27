@@ -24,11 +24,19 @@ def read_products(
     limit: int = 20,
     category: Optional[int] = None,
     search: Optional[str] = None,
+    include_inactive: bool = Query(False, description="Include inactive products"),
 ) -> Any:
     products = product_service.get_multi(
-        db, skip=skip, limit=limit, category_id=category, search=search
+        db,
+        skip=skip,
+        limit=limit,
+        category_id=category,
+        search=search,
+        include_inactive=include_inactive,
     )
-    total = product_service.count(db, category_id=category, search=search)
+    total = product_service.count(
+        db, category_id=category, search=search, include_inactive=include_inactive
+    )
     items = []
     for prod in products:
         prod_dict = prod.__dict__.copy()

@@ -31,10 +31,10 @@ export default function ProductsPage() {
 
   const loadData = async () => {
     try {
-      // Carregar produtos do usuário
-      const productsResponse = await productService.getProducts();
+      // Carregar produtos do usuário - incluindo inativos se necessário
+      const productsResponse = await productService.getProducts(0, 100, undefined, undefined, true);
       const userProducts = productsResponse.data.items.filter((product: any) =>
-        product.created_by_id == localStorage.getItem("user_id")
+        product.created_by_id.toString() === localStorage.getItem("user_id")
       );
       setProducts(userProducts);
       applyFilters(userProducts, selectedCategory, showInactive);
@@ -268,7 +268,7 @@ export default function ProductsPage() {
                       <div
                         key={product.id}
                         className={`flex flex-col border rounded-lg shadow-md p-4 min-w-64 transition-all hover:shadow-lg ${isInactive ? 'bg-gray-50 border-gray-300' :
-                            isSoldOut ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'
+                          isSoldOut ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'
                           }`}
                       >
                         <div className="relative mb-3">

@@ -72,11 +72,13 @@ export class ProductService {
         skip: number = 0,
         limit: number = 20,
         category?: number,
-        search?: string
+        search?: string,
+        includeInactive?: boolean
     ) {
         const params: any = { skip, limit };
         if (category !== undefined && category !== null) params.category = category;
         if (search) params.search = search;
+        if (includeInactive) params.include_inactive = includeInactive;
         return axiosInstance.get('/products/', { params });
     }
 

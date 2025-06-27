@@ -7,6 +7,7 @@ from app.repositories.product import product_repository
 from app.schemas.product import ProductCreate, ProductUpdate
 from app.models.category import Category
 
+
 class ProductService:
     def get(self, db: Session, product_id: int) -> Optional[Product]:
         return product_repository.get(db, id=product_id)
@@ -22,9 +23,15 @@ class ProductService:
         limit: int = 100,
         category_id: Optional[int] = None,
         search: Optional[str] = None,
+        include_inactive: bool = False,
     ) -> List[Product]:
         return product_repository.get_multi_with_filter(
-            db, skip=skip, limit=limit, category_id=category_id, search=search
+            db,
+            skip=skip,
+            limit=limit,
+            category_id=category_id,
+            search=search,
+            include_inactive=include_inactive,
         )
 
     def count(
@@ -33,9 +40,13 @@ class ProductService:
         *,
         category_id: Optional[int] = None,
         search: Optional[str] = None,
+        include_inactive: bool = False,
     ) -> int:
         return product_repository.count_with_filter(
-            db, category_id=category_id, search=search
+            db,
+            category_id=category_id,
+            search=search,
+            include_inactive=include_inactive,
         )
 
     def create(self, db: Session, *, obj_in: ProductCreate) -> Product:

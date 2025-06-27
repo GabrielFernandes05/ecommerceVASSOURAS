@@ -53,9 +53,14 @@ class ProductRepository(BaseRepository[Product, ProductCreate, ProductUpdate]):
         limit: int = 100,
         category_id: Optional[int] = None,
         search: Optional[str] = None,
-        is_active: bool = True,
+        include_inactive: bool = False,
     ) -> List[Product]:
-        query = db.query(Product).filter(Product.is_active == is_active)
+        if include_inactive:
+            # Retorna todos os produtos (ativos e inativos)
+            query = db.query(Product)
+        else:
+            # Retorna apenas produtos ativos (comportamento padrão)
+            query = db.query(Product).filter(Product.is_active == True)
 
         if category_id:
             query = query.join(category_product).filter(
@@ -74,9 +79,14 @@ class ProductRepository(BaseRepository[Product, ProductCreate, ProductUpdate]):
         *,
         category_id: Optional[int] = None,
         search: Optional[str] = None,
-        is_active: bool = True,
+        include_inactive: bool = False,
     ) -> int:
-        query = db.query(Product).filter(Product.is_active == is_active)
+        if include_inactive:
+            # Conta todos os produtos (ativos e inativos)
+            query = db.query(Product)
+        else:
+            # Conta apenas produtos ativos (comportamento padrão)
+            query = db.query(Product).filter(Product.is_active == True)
 
         if category_id:
             query = query.join(category_product).filter(
