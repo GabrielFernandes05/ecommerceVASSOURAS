@@ -83,6 +83,22 @@ export class ProductService {
     getProduct(id: number) {
         return axiosInstance.get(`/products/${id}`);
     }
+
+    updateProduct(id: number, data: {
+        name?: string,
+        description?: string,
+        price?: number,
+        stock?: number,
+        image_url?: string,
+        is_active?: boolean,
+        category_ids?: number[]
+    }) {
+        return axiosInstance.put(`/products/my/${id}`, data);
+    }
+
+    deleteProduct(id: number) {
+        return axiosInstance.delete(`/products/my/${id}`);
+    }
 }
 
 export class CategoryService {
@@ -115,5 +131,42 @@ export class CartService {
 
     removeItemFromCart(productId: number) {
         return axiosInstance.delete(`/cart/items/${productId}/`);
+    }
+
+    // Método para obter quantidade de um produto específico no carrinho
+    async getProductQuantityInCart(productId: number): Promise<number> {
+        try {
+            const response = await this.getCart();
+            const cart = response.data;
+            if (cart && cart.items) {
+                const item = cart.items.find((item: any) => item.product.id === productId);
+                return item ? item.quantity : 0;
+            }
+            return 0;
+        } catch (error) {
+            return 0;
+        }
+    }
+}
+
+export class OrderService {
+    createOrder(shippingAddress: string, paymentMethod: string) {
+        return axiosInstance.post('/orders/', {
+            shipping_address: shippingAddress,
+            payment_method: paymentMethod
+        });
+    }
+
+    getOrders(skip: number = 0, limit: number = 10) {
+        const params = { skip, limit };
+        return axiosInstance.get('/orders/', { params });
+    }
+
+    getOrder(orderId: number) {
+        return axiosInstance.get(`/orders/${orderId}`);
+    }
+
+    updateOrderStatus(orderId: number, status: string) {
+        return axiosInstance.put(`/orders/${orderId}/status`, { status });
     }
 }

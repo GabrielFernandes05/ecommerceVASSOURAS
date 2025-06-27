@@ -32,7 +32,9 @@ class OrderRepository(BaseRepository[Order, OrderCreate, OrderCreate]):
         if user_id:
             query = query.filter(Order.user_id == user_id)
 
-        return query.options(joinedload(Order.items)).first()
+        return query.options(
+            joinedload(Order.items).joinedload(OrderItem.product)
+        ).first()
 
     def create_order_with_items(
         self,
@@ -43,14 +45,22 @@ class OrderRepository(BaseRepository[Order, OrderCreate, OrderCreate]):
         payment_method: str,
         items: List[Tuple[int, int]],  # List of (product_id, quantity)
     ) -> Order:
-        # Verify product prices and calculate total
+        # Verify product prices, availability and calculate total
         total_amount = 0.0
         order_items = []
 
         for product_id, quantity in items:
             product = db.query(Product).filter(Product.id == product_id).first()
             if not product:
-                continue
+                raise ValueError(f"Product with ID {product_id} not found")
+
+            if not product.is_active:
+                raise ValueError(f"Product '{product.name}' is not active")
+
+            if product.stock < quantity:
+                raise ValueError(
+                    f"Insufficient stock for product '{product.name}'. Available: {product.stock}, Requested: {quantity}"
+                )
 
             total_amount += product.price * quantity
             order_items.append(
@@ -71,10 +81,15 @@ class OrderRepository(BaseRepository[Order, OrderCreate, OrderCreate]):
         db.add(order)
         db.flush()
 
-        # Add items to order
-        for item in order_items:
+        # Add items to order and update stock
+        for item, (product_id, quantity) in zip(order_items, items):
             item.order_id = order.id
             db.add(item)
+
+            # Update product stock
+            product = db.query(Product).filter(Product.id == product_id).first()
+            product.stock -= quantity
+            db.add(product)
 
         db.commit()
         db.refresh(order)

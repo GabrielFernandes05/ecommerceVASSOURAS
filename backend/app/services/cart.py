@@ -1,9 +1,11 @@
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from app.models.cart import Cart, CartItem
 from app.repositories.cart import cart_item_repository, cart_repository
+from app.repositories.cart import CartStockError
 from app.schemas.cart import CartItemCreate, CartItemUpdate, CartResponse
 
 
@@ -17,10 +19,13 @@ class CartService:
     def add_item_to_cart(
         self, db: Session, *, user_id: int, product_id: int, quantity: int = 1
     ) -> CartItem:
-        cart = cart_repository.get_or_create_cart(db, user_id=user_id)
-        return cart_item_repository.add_item_to_cart(
-            db, cart_id=cart.id, product_id=product_id, quantity=quantity
-        )
+        try:
+            cart = cart_repository.get_or_create_cart(db, user_id=user_id)
+            return cart_item_repository.add_item_to_cart(
+                db, cart_id=cart.id, product_id=product_id, quantity=quantity
+            )
+        except CartStockError as e:
+            raise HTTPException(status_code=400, detail=e.message)
 
     def update_cart_item(
         self, db: Session, *, user_id: int, item_id: int, obj_in: CartItemUpdate
@@ -37,6 +42,15 @@ class CartService:
 
         if not item:
             return None
+
+        # Se está atualizando a quantidade, usar o método que verifica estoque
+        if hasattr(obj_in, "quantity") and obj_in.quantity is not None:
+            try:
+                return cart_item_repository.update_cart_item_quantity(
+                    db, cart_item=item, new_quantity=obj_in.quantity
+                )
+            except CartStockError as e:
+                raise HTTPException(status_code=400, detail=e.message)
 
         return cart_item_repository.update(db, db_obj=item, obj_in=obj_in)
 

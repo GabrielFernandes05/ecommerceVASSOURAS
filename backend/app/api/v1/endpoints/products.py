@@ -114,3 +114,42 @@ def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
     product = product_service.remove(db, product_id=product_id)
     return product
+
+
+@router.put("/my/{product_id}", response_model=Product)
+def update_my_product(
+    *,
+    db: Session = Depends(get_db),
+    product_id: int,
+    product_in: ProductUpdate,
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    product = product_service.get(db, product_id=product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Verificar se o produto pertence ao usuário atual
+    if product.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    product = product_service.update(db, db_obj=product, obj_in=product_in)
+    return product
+
+
+@router.delete("/my/{product_id}", response_model=Product)
+def delete_my_product(
+    *,
+    db: Session = Depends(get_db),
+    product_id: int,
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    product = product_service.get(db, product_id=product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Verificar se o produto pertence ao usuário atual
+    if product.created_by_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    product = product_service.remove(db, product_id=product_id)
+    return product

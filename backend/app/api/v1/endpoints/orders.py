@@ -26,7 +26,7 @@ def read_user_orders(
     return orders
 
 
-@router.get("/{order_id}", response_model=OrderResponse)
+@router.get("/{order_id}")
 def read_order(
     order_id: int,
     current_user: User = Depends(get_current_user),
@@ -35,7 +35,31 @@ def read_order(
     order = order_service.get(db, order_id=order_id, user_id=current_user.id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order
+
+    # Convert order to dict with product names
+    order_dict = {
+        "id": order.id,
+        "user_id": order.user_id,
+        "total_amount": order.total_amount,
+        "status": order.status,
+        "shipping_address": order.shipping_address,
+        "payment_method": order.payment_method,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+        "items": [
+            {
+                "id": item.id,
+                "product_name": (
+                    item.product.name if item.product else "Produto não encontrado"
+                ),
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+            }
+            for item in order.items
+        ],
+    }
+
+    return order_dict
 
 
 @router.post("/", response_model=OrderResponse)
@@ -51,17 +75,45 @@ def create_order(
 
     cart_items = [(item.product_id, item.quantity) for item in cart.items]
 
-    order = order_service.create_from_cart(
-        db,
-        user_id=current_user.id,
-        shipping_address=order_in.shipping_address,
-        payment_method=order_in.payment_method,
-        cart_items=cart_items,
-    )
+    try:
+        order = order_service.create_from_cart(
+            db,
+            user_id=current_user.id,
+            shipping_address=order_in.shipping_address,
+            payment_method=order_in.payment_method,
+            cart_items=cart_items,
+        )
 
-    cart_service.clear_cart(db, user_id=current_user.id)
+        # Clear cart only after successful order creation
+        cart_service.clear_cart(db, user_id=current_user.id)
 
-    return order
+        # Return order with product names
+        order_dict = {
+            "id": order.id,
+            "user_id": order.user_id,
+            "total_amount": order.total_amount,
+            "status": order.status,
+            "shipping_address": order.shipping_address,
+            "payment_method": order.payment_method,
+            "created_at": order.created_at,
+            "updated_at": order.updated_at,
+            "items": [
+                {
+                    "product_name": (
+                        item.product.name if item.product else "Produto não encontrado"
+                    ),
+                    "quantity": item.quantity,
+                    "unit_price": item.unit_price,
+                }
+                for item in order.items
+            ],
+        }
+
+        return order_dict
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to create order")
 
 
 @router.put(
