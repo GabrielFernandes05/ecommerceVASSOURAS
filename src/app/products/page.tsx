@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 import { ProductService, CategoryService } from "@/services/axiosService";
 import Header from "@/components/ui/header";
 import { useRouter } from "next/navigation";
-import { ListCollapse, Filter, BarChart3, Package, AlertCircle } from "lucide-react";
+import { ListCollapse, Filter, BarChart3, Package, AlertCircle, Search } from "lucide-react";
 import CartForm from "@/components/forms/cartForm";
 import ProductRegisterDialog from "@/components/forms/ProductRegisterDialog";
 import ProductManager from "@/components/forms/ProductManager";
+import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/useCart";
 
 export default function ProductsPage() {
@@ -22,6 +23,7 @@ export default function ProductsPage() {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const router = useRouter();
   const { getProductQuantityInCart } = useCart();
 
@@ -37,7 +39,7 @@ export default function ProductsPage() {
         product.created_by_id.toString() === localStorage.getItem("user_id")
       );
       setProducts(userProducts);
-      applyFilters(userProducts, selectedCategory, showInactive);
+      applyFilters(userProducts, selectedCategory, showInactive, searchTerm);
 
       // Carregar categorias
       const categoriesResponse = await categoryService.getCategories();
@@ -53,7 +55,7 @@ export default function ProductsPage() {
     loadData();
   };
 
-  const applyFilters = (productsToFilter = products, categoryId = selectedCategory, includeInactive = showInactive) => {
+  const applyFilters = (productsToFilter = products, categoryId = selectedCategory, includeInactive = showInactive, search = searchTerm) => {
     let filtered = productsToFilter;
 
     // Filtrar por status ativo/inativo
@@ -68,18 +70,32 @@ export default function ProductsPage() {
       );
     }
 
+    // Filtrar por busca
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower)
+      );
+    }
+
     setFilteredProducts(filtered);
   };
 
   const filterByCategory = (categoryId: number | null) => {
     setSelectedCategory(categoryId);
-    applyFilters(products, categoryId, showInactive);
+    applyFilters(products, categoryId, showInactive, searchTerm);
   };
 
   const toggleShowInactive = () => {
     const newShowInactive = !showInactive;
     setShowInactive(newShowInactive);
-    applyFilters(products, selectedCategory, newShowInactive);
+    applyFilters(products, selectedCategory, newShowInactive, searchTerm);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    applyFilters(products, selectedCategory, showInactive, term);
   };
 
   const getProductStats = () => {
@@ -159,6 +175,25 @@ export default function ProductsPage() {
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarMenu>
+                    {/* Barra de pesquisa */}
+                    <SidebarMenuItem>
+                      <div className="p-3 bg-white rounded-md mb-2">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="text"
+                            placeholder="Buscar meus produtos..."
+                            value={searchTerm}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="pl-9 pr-3"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Pesquise por nome ou descrição
+                        </p>
+                      </div>
+                    </SidebarMenuItem>
+
                     {/* Toggle para mostrar produtos inativos */}
                     <SidebarMenuItem>
                       <div className="p-3 bg-white rounded-md mb-2">
@@ -186,17 +221,28 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-between w-full">
                           <span>📋 Todos os Produtos</span>
                           <Badge variant="outline" className="text-xs">
-                            {products.length}
+                            {searchTerm.trim() ? filteredProducts.length : products.length}
                           </Badge>
                         </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
 
                     {categories.map((category: any) => {
-                      const categoryProductCount = products.filter(product =>
+                      let categoryProducts = products.filter(product =>
                         product.categories && product.categories.some((cat: any) => cat.id === category.id) &&
                         (showInactive || product.is_active)
-                      ).length;
+                      );
+
+                      // Aplicar filtro de busca se houver
+                      if (searchTerm.trim()) {
+                        const searchLower = searchTerm.toLowerCase();
+                        categoryProducts = categoryProducts.filter(product =>
+                          product.name.toLowerCase().includes(searchLower) ||
+                          product.description.toLowerCase().includes(searchLower)
+                        );
+                      }
+
+                      const categoryProductCount = categoryProducts.length;
 
                       return (
                         <SidebarMenuItem key={category.id}>
@@ -227,14 +273,18 @@ export default function ProductsPage() {
             <Card className="h-full">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">
-                  {selectedCategory === null
-                    ? "Meus produtos anunciados"
-                    : `Meus produtos - ${categories.find(cat => cat.id === selectedCategory)?.name || 'Categoria'}`
-                  }
+                  {searchTerm ? (
+                    `Resultados para "${searchTerm}"`
+                  ) : selectedCategory === null ? (
+                    "Meus produtos anunciados"
+                  ) : (
+                    `Meus produtos - ${categories.find(cat => cat.id === selectedCategory)?.name || 'Categoria'}`
+                  )}
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
                   {filteredProducts.length} produto(s) encontrado(s)
-                  {selectedCategory !== null && ` na categoria selecionada`}
+                  {searchTerm && ` para "${searchTerm}"`}
+                  {selectedCategory !== null && !searchTerm && ` na categoria selecionada`}
                   {!showInactive && " (apenas ativos)"}
                 </p>
               </CardHeader>
@@ -242,18 +292,25 @@ export default function ProductsPage() {
                 {filteredProducts.length === 0 ? (
                   <div className="w-full text-center py-8">
                     <p className="text-gray-500">
-                      {selectedCategory === null
-                        ? (showInactive ? "Você ainda não cadastrou nenhum produto." : "Você não possui produtos ativos.")
-                        : (showInactive ? "Você não possui produtos nesta categoria." : "Você não possui produtos ativos nesta categoria.")
-                      }
+                      {searchTerm ? (
+                        `Nenhum produto encontrado para "${searchTerm}".`
+                      ) : selectedCategory === null ? (
+                        showInactive ? "Você ainda não cadastrou nenhum produto." : "Você não possui produtos ativos."
+                      ) : (
+                        showInactive ? "Você não possui produtos nesta categoria." : "Você não possui produtos ativos nesta categoria."
+                      )}
                     </p>
-                    {selectedCategory !== null && (
+                    {(searchTerm || selectedCategory !== null) && (
                       <Button
                         variant="outline"
                         className="mt-2"
-                        onClick={() => filterByCategory(null)}
+                        onClick={() => {
+                          setSearchTerm("");
+                          setSelectedCategory(null);
+                          applyFilters(products, null, showInactive, "");
+                        }}
                       >
-                        Ver todos os produtos
+                        Limpar filtros
                       </Button>
                     )}
                   </div>

@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 import { ProductService, CategoryService } from "@/services/axiosService";
 import Header from "@/components/ui/header";
 import { useRouter } from "next/navigation";
-import { ListCollapse, Filter, ShoppingCart } from "lucide-react";
+import { ListCollapse, Filter, ShoppingCart, Search } from "lucide-react";
 import CartForm from "@/components/forms/cartForm";
 import ProductRegisterDialog from "@/components/forms/ProductRegisterDialog";
+import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/useCart";
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const { cart, getProductQuantityInCart } = useCart();
@@ -33,10 +35,13 @@ export default function Home() {
   const loadProducts = () => {
     productService.getProducts()
       .then(response => {
-        setProducts(response.data.items);
-        setFilteredProducts(response.data.items);
+        const loadedProducts = response.data.items || [];
+        setProducts(loadedProducts);
+        // Aplicar filtros com os produtos carregados
+        applyFilters(selectedCategory, searchTerm, loadedProducts);
       })
       .catch(error => {
+        console.error("Erro ao carregar produtos:", error);
         setProducts([]);
         setFilteredProducts([]);
       });
@@ -52,17 +57,37 @@ export default function Home() {
 
   const filterByCategory = (categoryId: number | null) => {
     setSelectedCategory(categoryId);
+    applyFilters(categoryId, searchTerm);
+  };
 
-    if (categoryId === null) {
-      // Mostrar todos os produtos
-      setFilteredProducts(products);
-    } else {
-      // Filtrar produtos pela categoria selecionada
-      const filtered = products.filter(product =>
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    applyFilters(selectedCategory, term);
+  };
+
+  const applyFilters = (categoryId: number | null = selectedCategory, search: string = searchTerm, productsToFilter: any[] = products) => {
+    let filtered = [...productsToFilter]; // Criar uma cópia para evitar mutação
+
+    // Sempre filtrar produtos inativos na página principal primeiro
+    filtered = filtered.filter(product => product.is_active);
+
+    // Filtrar por categoria
+    if (categoryId !== null) {
+      filtered = filtered.filter(product =>
         product.categories && product.categories.some((cat: any) => cat.id === categoryId)
       );
-      setFilteredProducts(filtered);
     }
+
+    // Filtrar por busca
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredProducts(filtered);
   };
 
   return (
@@ -95,12 +120,31 @@ export default function Home() {
               <SidebarHeader>
                 <div className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
-                  <h2 className="text-lg font-bold">Categorias</h2>
+                  <h2 className="text-lg font-bold">Filtros</h2>
                 </div>
               </SidebarHeader>
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarMenu>
+                    {/* Barra de pesquisa */}
+                    <SidebarMenuItem>
+                      <div className="p-3 bg-white rounded-md mb-2">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="text"
+                            placeholder="Buscar produtos..."
+                            value={searchTerm}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="pl-9 pr-3"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Pesquise por nome ou descrição
+                        </p>
+                      </div>
+                    </SidebarMenuItem>
+
                     {/* Opção para mostrar todos os produtos */}
                     <SidebarMenuItem>
                       <SidebarMenuButton
@@ -149,24 +193,45 @@ export default function Home() {
             <Card className="h-full">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">
-                  {selectedCategory === null
-                    ? "Em destaque"
-                    : `Categoria: ${categories.find(cat => cat.id === selectedCategory)?.name || 'Desconhecida'}`
-                  }
+                  {searchTerm ? (
+                    `Resultados para "${searchTerm}"`
+                  ) : selectedCategory === null ? (
+                    "Em destaque"
+                  ) : (
+                    `Categoria: ${categories.find(cat => cat.id === selectedCategory)?.name || 'Desconhecida'}`
+                  )}
                 </CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
                   {filteredProducts.length} produto(s) encontrado(s)
+                  {searchTerm && ` para "${searchTerm}"`}
+                  {selectedCategory !== null && !searchTerm && ` na categoria selecionada`}
                 </p>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-6">
                 {filteredProducts.length === 0 ? (
                   <div className="w-full text-center py-8">
                     <p className="text-gray-500">
-                      {selectedCategory === null
-                        ? "Nenhum produto disponível."
-                        : "Nenhum produto encontrado nesta categoria."
-                      }
+                      {searchTerm ? (
+                        `Nenhum produto encontrado para "${searchTerm}".`
+                      ) : selectedCategory === null ? (
+                        "Nenhum produto disponível."
+                      ) : (
+                        "Nenhum produto encontrado nesta categoria."
+                      )}
                     </p>
+                    {(searchTerm || selectedCategory !== null) && (
+                      <Button
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          setSearchTerm("");
+                          setSelectedCategory(null);
+                          applyFilters(null, "");
+                        }}
+                      >
+                        Limpar filtros
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   filteredProducts.map((product: any) => {
